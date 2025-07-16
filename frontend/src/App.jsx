@@ -1,32 +1,33 @@
-import React, { useState, useEffect } from "react";
-import { getHealth } from "./api/health";
-import { useDispatch, useSelector } from "react-redux";
-import {
-  fetchHealth,
-  selectHealthLoading,
-  selectHealthStatus,
-  selectHealthError,
-} from "./features/health/healthSlice";
+import React, { useEffect } from "react";
+import { Routes, Route, Navigate } from "react-router-dom";
+import { useDispatch } from "react-redux";
+import { fetchHealth } from "./features/health/healthSlice";
+
+import Login from "./features/auth/Login";
+import RequireAuth from "./features/auth/RequireAuth";
+import Dashboard from "./features/dashboard/Dashboard";
 
 function App() {
   const dispatch = useDispatch();
 
-  // Selectors to read state
-  const loading = useSelector(selectHealthLoading);
-  const status = useSelector(selectHealthStatus);
-  const error = useSelector(selectHealthError);
-
+  // Kick off backend health check once on mount
   useEffect(() => {
     dispatch(fetchHealth());
   }, [dispatch]);
 
   return (
-    <div style={{ padding: 20 }}>
-      <h1>✅ React is working!</h1>
-      {loading && <p>Loading…</p>}
-      {!loading && error && <p style={{ color: "red" }}>Error: {error}</p>}
-      {!loading && !error && <p>Backend status: {status}</p>}
-    </div>
+    <Routes>
+      <Route path="/login" element={<Login />} />
+      <Route path="/" element={<Navigate to="/login" replace />} />
+      <Route
+        path="/dashboard"
+        element={
+          <RequireAuth>
+            <Dashboard />
+          </RequireAuth>
+        }
+      />
+    </Routes>
   );
 }
 

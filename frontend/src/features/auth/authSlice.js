@@ -1,24 +1,65 @@
-import { createSlice } from '@reduxjs/toolkit';
+// frontend/src/features/auth/authSlice.js
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import axios from 'axios';
 
-const initialState = {
-  user: null,
-  token: null,
-};
+// Async thunk: POST /api/auth/login
+export const loginUser = createAsyncThunk(
+  'auth/loginUser',
+  async (credentials, { rejectWithValue }) => {
+    try {
+      const response = await axios.post(
+        '/api/auth/login',
+        credentials
+      );
+      // Expect { token, user } or at least { token } in response.data
+      return response.data;
+    } catch (err) {
+      const message = err.response?.data?.error || err.message;
+      return rejectWithValue(message);
+    }
+  }
+);
 
 const authSlice = createSlice({
   name: 'auth',
-  initialState,
-  reducers: {
-    setCredentials: (state, action) => {
-      state.user = action.payload.user;
-      state.token = action.payload.token;
-    },
-    logout: (state) => {
-      state.user = null;
-      state.token = null;
-    },
+  initialState: {
+    token: null,       // JWT on success
+    user: null,        // optional user object
+    status: 'idle',    // 'idle' | 'loading' | 'succeeded' | 'failed'
+    error: null        // error message
   },
+  reducers: {
+    logout(state) {
+      state.token = null;
+      state.user = null;
+      state.status = 'idle';
+      state.error = null;
+    }
+  },
+  extraReducers: builder => {
+    builder
+      .addCase(loginUser.pending, state => {
+        state.status = 'loading';
+        state.error = null;
+      })
+      .addCase(loginUser.fulfilled, (state, action) => {
+        state.status = 'succeeded';
+        state.token = action.payload.token;
+        // if your API returns a user object:
+        state.user = action.payload.user || null;
+      })
+      .addCase(loginUser.rejected, (state, action) => {
+        state.status = 'failed';
+        state.error = action.payload || action.error.message;
+      });
+  }
 });
 
-export const { setCredentials, logout } = authSlice.actions;
+export const { logout } = authSlice.actions;
 export default authSlice.reducer;
+
+// Selectors
+export const selectAuthToken  = state => state.auth.token;
+export const selectAuthUser   = state => state.auth.user;
+export const selectAuthStatus = state => state.auth.status;
+export const selectAuthError  = state => state.auth.error;

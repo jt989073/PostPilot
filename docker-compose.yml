@@ -1,17 +1,24 @@
+version: '3.8'
+
 services:
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
     ports:
-      - "3000:3000"
+      - '3000:3000'
     depends_on:
       - backend
     environment:
+      # Vite will use this to know where to call your API
       - VITE_API_URL=http://backend:5000
     volumes:
-      - ./frontend:/app
-      - /app/node_modules
+      # Mount only your app sources and configs, not node_modules/
+      - ./frontend/src:/app/src
+      - ./frontend/public:/app/public
+      - ./frontend/index.html:/app/index.html
+      - ./frontend/package.json:/app/package.json
+      - ./frontend/vite.config.js:/app/vite.config.js
     stdin_open: true
     tty: true
 
@@ -20,7 +27,7 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     ports:
-      - "5000:5000"
+      - '5000:5000'
     depends_on:
       - postgres
       - redis
@@ -42,12 +49,12 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
-      - "5432:5432"
+      - '5432:5432'
 
   redis:
     image: redis:6-alpine
     ports:
-      - "6379:6379"
+      - '6379:6379'
 
   celery:
     build:
