@@ -4,8 +4,8 @@
  * @throws {Error} if the response status is not OK.
  */
 export async function getHealth() {
-const res = await fetch(`${import.meta.env.VITE_API_URL}/api/health`);
-
+  // hit the relative URL; Vite will forward it
+  const res = await fetch("/api/health");
   if (!res.ok) {
     // Forward HTTP error for caller to catch
     throw new Error(res.statusText || `HTTP ${res.status}`);
