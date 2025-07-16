@@ -20,7 +20,7 @@ def create_app():
         return jsonify(status="healthy", service="social-media-dashboard")
 
     # Register your blueprints
-    app.register_blueprint(auth, url_prefix="/api")
+    app.register_blueprint(auth, url_prefix="/api/auth")
     app.register_blueprint(posts, url_prefix="/api")
     app.register_blueprint(oauth, url_prefix="/api")
     app.register_blueprint(analytics, url_prefix="/api")
