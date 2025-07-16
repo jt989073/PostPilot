@@ -1,0 +1,19 @@
+[packages]
+flask = "*"
+flask-cors = "*"
+flask-migrate = "*"
+flask-sqlalchemy = "*"
+flask-jwt-extended = "*"
+python-dotenv = "*"
+psycopg2-binary = "*"
+redis = "*"
+celery = "*"
+requests = "*"
+boto3 = "*"
+authlib = "*"
+
+[dev-packages]
+black = "*"
+flake8 = "*"
+pytest = "*"
+pytest-cov = "*"
