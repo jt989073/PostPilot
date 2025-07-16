@@ -1,36 +1,33 @@
-import React, { useState, useEffect } from 'react';
-import { getHealth } from './api/health';
+import React, { useState, useEffect } from "react";
+import { getHealth } from "./api/health";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  fetchHealth,
+  selectHealthLoading,
+  selectHealthStatus,
+  selectHealthError,
+} from "./features/health/healthSlice";
 
 function App() {
-  // Holds the JSON response { status, service }
-  const [health, setHealth] = useState(null);
-  // Holds any error message
-  const [error, setError] = useState(null);
+  const dispatch = useDispatch();
 
-    useEffect(() => {
-    getHealth()
-      .then(data => {
-        setHealth(data);        // Save the healthy response
-      })
-      .catch(err => {
-        setError(err.message);  // Save any error
-      });
-  }, []); // empty deps → runs only once
+  // Selectors to read state
+  const loading = useSelector(selectHealthLoading);
+  const status = useSelector(selectHealthStatus);
+  const error = useSelector(selectHealthError);
 
+  useEffect(() => {
+    dispatch(fetchHealth());
+  }, [dispatch]);
 
-    return (
+  return (
     <div style={{ padding: 20 }}>
       <h1>✅ React is working!</h1>
-      {error ? (
-        <p style={{ color: 'red' }}>Error: {error}</p>
-      ) : (
-        <p>
-          Backend status:{' '}
-          {health ? health.status : 'Loading...'}
-        </p>
-      )}
+      {loading && <p>Loading…</p>}
+      {!loading && error && <p style={{ color: "red" }}>Error: {error}</p>}
+      {!loading && !error && <p>Backend status: {status}</p>}
     </div>
   );
 }
 
-export default App
+export default App;
