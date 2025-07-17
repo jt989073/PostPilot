@@ -1,40 +1,52 @@
-// frontend/src/features/auth/authSlice.js
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import axios from 'axios';
+import { login as apiLogin } from '../../api/auth';
+import { saveAuth, loadAuth, clearAuth } from '../../utils/authStorage';
 
-// Async thunk: POST /api/auth/login
+
+// ---------------------------------------------
+// Thunk: loginUser(credentials)
+// credentials: { email, password }
+// ---------------------------------------------
 export const loginUser = createAsyncThunk(
   'auth/loginUser',
-  async (credentials, { rejectWithValue }) => {
+  async ({ email, password }, { rejectWithValue }) => {
     try {
-      const response = await axios.post(
-        '/api/auth/login',
-        credentials
-      );
-      // Expect { token, user } or at least { token } in response.data
-      return response.data;
+      const data = await apiLogin(email, password); // { token, user }
+      return data;
     } catch (err) {
-      const message = err.response?.data?.error || err.message;
-      return rejectWithValue(message);
+      return rejectWithValue(err.message || 'Login failed');
     }
   }
 );
 
+const stored = loadAuth(); // {token, user} | null
+
+const initialState = {
+  user: stored?.user ?? null,
+  token: stored?.token ?? null,
+  status: 'idle',   // request state: 'idle' | 'loading' | 'succeeded' | 'failed'
+  error: null,
+};
+
 const authSlice = createSlice({
   name: 'auth',
-  initialState: {
-    token: null,       // JWT on success
-    user: null,        // optional user object
-    status: 'idle',    // 'idle' | 'loading' | 'succeeded' | 'failed'
-    error: null        // error message
-  },
+  initialState,
   reducers: {
-    logout(state) {
+    // manual set (e.g., hydrate from localStorage)
+    setCredentials: (state, action) => {
+      state.token = action.payload.token;
+      state.user = action.payload.user;
+      state.status = 'succeeded';
+      state.error = null;
+      saveAuth({ token: state.token, user: state.user });
+    },
+    logout: (state) => {
       state.token = null;
       state.user = null;
       state.status = 'idle';
       state.error = null;
-    }
+      clearAuth();
+    },
   },
   extraReducers: builder => {
     builder
@@ -45,17 +57,17 @@ const authSlice = createSlice({
       .addCase(loginUser.fulfilled, (state, action) => {
         state.status = 'succeeded';
         state.token = action.payload.token;
-        // if your API returns a user object:
-        state.user = action.payload.user || null;
+        state.user = action.payload.user;
+        saveAuth({ token: state.token, user: state.user });
       })
       .addCase(loginUser.rejected, (state, action) => {
         state.status = 'failed';
         state.error = action.payload || action.error.message;
       });
-  }
+  },
 });
 
-export const { logout } = authSlice.actions;
+export const { setCredentials, logout } = authSlice.actions;
 export default authSlice.reducer;
 
 // Selectors
